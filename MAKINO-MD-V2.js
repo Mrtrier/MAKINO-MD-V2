@@ -16,7 +16,6 @@ const pm2 = require('pm2');
 const util = require("util");
 const { promisify } = require('util');
 const setTimeoutPromise = promisify(setTimeout);
-const chalk = require("chalk");
 const axios = require('axios');
 const { spawn, exec, execSync } = require("child_process");
 const moment = require("moment-timezone");
@@ -283,14 +282,6 @@ m.message.InteractiveResponseMessage.NativeFlowResponseMessage ||               
     const reply = (teks) => {
       Taira.sendMessage(m.chat,
       { text: teks,
-      contextInfo:{
-      mentionedJid:[sender],
-      forwardingScore: 9999999,
-      isForwarded: true,
-      forwardedNewsletterMessageInfo: {
-      newsletterName: "♱Click Me♱♡⃤",
-      newsletterJid: "120363320283062687@newsletter",
-      },
       "externalAdReply": {
       "showAdAttribution": true,
       "containsAutoReply": true,
@@ -299,7 +290,7 @@ m.message.InteractiveResponseMessage.NativeFlowResponseMessage ||               
       "previewType": "VIDEO",
       "thumbnailUrl": "https://graph.org/file/30265f2195f076e1bb3c3.jpg",
       "thumbnail": fs.readFileSync(`./Assets/pic7.jpg`),
-      "sourceUrl": `https://whatsapp.com/channel/0029Vag5l2ALSmbi14YryJ2r`}}},
+      "sourceUrl": `https://whatsapp.com/channel/0029Vag5l2ALSmbi14YryJ2r`}},
       { quoted: m})
 	  }
 	  
@@ -317,17 +308,19 @@ const v2features = () =>{
     }
 
     if (m.message) {
-      addBalance(m.sender, randomNomor(574), balance);
       console.log(
-        chalk.black(chalk.bgWhite(`[ NEW MESSAGE RECEIVED ]\n`)),
-        chalk.black(chalk.bgGreen(new Date())),
-        chalk.black(chalk.bgBlue(budy || m.mtype)) +
-        "\n" +
-        chalk.magenta("=> 💧Message From"),
-        chalk.green(pushname),
-        chalk.yellow(m.sender) + "\n" + chalk.blueBright(`=> 🌐 Message In\n`),
-        chalk.green(m.isGroup ? pushname : "🧩Private Chat", m.chat)
-      );
+        `[ NEW MESSAGE RECEIVED ]\n
+        ${new Date()}
+        ${budy || m.mtype}
+        
+        => 💧Message From
+        ${pushname}
+        ${m.sender}
+	
+	=> 🌐 Message In
+ 
+        ${m.isGroup ? pushname : "🧩Private Chat", m.chat}
+	`);
     }
 
     if (isCmd && !isUser) {
@@ -715,6 +708,12 @@ const smallinput = budy.toLowerCase();
 
 
     switch (command) {
+case 'clear': case 'clearchat': {
+	     if (!isCreator) return
+	     await Taira.chatModify({ delete: true, lastMessages: [{ key: m.key, messageTimestamp: m.messageTimestamp }] }, m.chat);
+             await reply('Chat Cleared.');
+	    }
+	break
 
 case 'addowner': {
 if (!isCreator) return reply(mess.botowner)
@@ -760,8 +759,8 @@ break
 
 case 'savecontact': case 'svcontact':{
 if (!m.isGroup) return reply(mess.grouponly)
-if (!isCreator) return reply(mess.botowner)
-let cmiggc = await Tairac.groupMetadata(m.chat)
+if (!isCreator) return
+let cmiggc = await Taira.groupMetadata(m.chat)
 let orgiggc = participants.map(a => a.id)
 vcard = ''
 noPort = 0
@@ -769,11 +768,11 @@ for (let a of cmiggc.participants) {
     vcard += `BEGIN:VCARD\nVERSION:3.0\nFN:[${noPort++}] +${a.id.split("@")[0]}\nTEL;type=CELL;type=VOICE;waid=${a.id.split("@")[0]}:+${a.id.split("@")[0]}\nEND:VCARD\n`
 }
 let nmfilect = './contacts.vcf'
-reply("Saving  '+cmiggc.participants.length+' participants contact")
+reply('Saving  ' + cmiggc.participants.length+' participants contact')
 require('fs').writeFileSync(nmfilect, vcard.trim())
 await sleep(2000)
 Taira.sendMessage(m.chat, {
-    document: require('fs').readFileSync(nmfilect), mimetype: 'text/vcard', fileName: 'MAKINO-MD-V2.vcf', caption: '\nDone saving.\nGroup Name: *'+cmiggc.subject+'*\nContacts: *'+cmiggc.participants.length+'*'
+    document: require('fs').readFileSync(nmfilect), mimetype: 'text/vcard', fileName: 'MAKINO-MD-V3.vcf', caption: '\nDone saving.\nGroup Name: *'+cmiggc.subject+'*\nContacts: *'+cmiggc.participants.length+'*'
 }, {ephemeralExpiration: 86400, quoted: m})
 require('fs').unlinkSync(nmfilect)
 }
@@ -2780,6 +2779,8 @@ case 'tovv': {
         Taira.sendMessage(m.chat, { text: args.join(" ") ? args.join(" ") : '', mentions: participants.map(a => a.id) }, { quoted: m })
       }
         break;
+
+		    
 	case 'ping': {
         if (isBan) return reply(mess.banned);
         if (isBanChat) return reply(mess.bangc);
@@ -2839,6 +2840,7 @@ case 'tovv': {
 	  Taira.sendMessage(from, { react: { text: "💧", key: m.key } })
           await Taira.sendMessage(m.chat, {text: `${m.chat}`}, { quoted: m})
         }
+	break 
 
 
       case 'nowa': case 'find': case 'stalk': case 'stalknumber': {
@@ -3777,33 +3779,6 @@ case 'tovv': {
       }
         break;
 
-      case 'tiktok': {
-        if (isBan) return reply(mess.banned);
-        if (isBanChat) return reply(mess.bangc);
-        if (!q) return reply('Please provide the link !')
-        reply(mess.wait)
-        if (!q.includes('tiktok')) return reply(`Invalid tiktok link!`)
-        const musim_rambutan = await TairaTiktok(`${q}`).catch(e => {
-          reply(mess.error)
-        })
-        console.log(musim_rambutan)
-        const Tairatiktokop = musim_rambutan.result.watermark
-        texttk = `_Please choose the button below_`
-        let buttons = [
-          { buttonId: `${prefix}ttnowm ${q}`, buttonText: { displayText: 'Watermark Free' }, type: 1 },
-          { buttonId: `${prefix}ttaud ${q}`, buttonText: { displayText: 'Audio ' }, type: 1 }
-        ]
-        let buttonMessage = {
-          video: { url: Tairatiktokop },
-          caption: texttk,
-          footer: `${BotName}`,
-          buttons: buttons,
-          headerType: 4,
-
-        }
-        Taira.sendMessage(from, buttonMessage, { quoted: m })
-      }
-        break;
 
       case 'yts': case 'ytsearch': {
         if (isBan) return reply(mess.banned);
@@ -3822,42 +3797,119 @@ case 'tovv': {
       }
         break;
 
-      //-----------------------------------------------------------------------------------------------------------------------------------//
 
+case 'tiktok': 
+case 'tt': 
+case 'ttdl': {
+    if (isBan) return reply(mess.banned);
+    if (isBanChat) return reply(mess.bangc);
+    if (!q) return reply("Provide a tiktok video link")
+    Taira.sendMessage(from, { react: { text: "🍃", key: m.key } });
+    let apiUrl = `https://widipe.com/download/tiktokdl?url=${encodeURIComponent(q)}`;
+    const fetch = require('node-fetch');
+    let response = await fetch(apiUrl);
+    let jsonResponse = await response.json();
+    let videoUrl = jsonResponse.result.video;
+    Taira.sendMessage(from, { 
+        video: { url: videoUrl }, 
+        mimetype: "video/mp4", 
+        caption: '> *ミ★ MAKINO-MD-V3 ★彡*' 
+    }, { quoted: m });
+    break;
+}
 
-      case 'play':
-      case 'song':
-      case 'music': {
+		    
+case 'video': {
         if (isBan) return reply(mess.banned);
         if (isBanChat) return reply(mess.bangc);
-        Taira.sendMessage(from, { react: { text: "🎵", key: m.key } });
-        const YT = require('./lib/ytdl-core');
-        const yts = require('youtube-yts');
-        const ffmpeg = require('fluent-ffmpeg');
-        let search = await yts(text);
-        let anu = search.videos[0];
-        const ytmp3play = await YT.mp3(anu.url);
-        let thumbnailUrl = anu.thumbnail;
-        await Taira.sendMessage(from, {
-          audio: fs.readFileSync(ytmp3play.path),
-          filename: anu.title + '.mp3',
-          mimetype: 'audio/mpeg',
-          contextInfo: {
-               mentionedJid: [m.sender],
-               externalAdReply: {
-               title: "↺ |◁   II   ▷|   ♡",
-               body: `Playing: ${anu.title}`,
-               thumbnailUrl: thumbnailUrl,
-               sourceUrl: "https://whatsapp.com/channel/0029Vag5l2ALSmbi14YryJ2r",
-               mediaType: 1,
-               renderLargerThumbnail: true
-               }
+    if (!q) return reply("Provide a query")
+    Taira.sendMessage(from, { react: { text: "🍃", key: m.key } });
+    let yts = require("youtube-yts");
+    let search = await yts(text);
+    let anu = search.videos[0]; 
+    let apiUrl = `https://widipe.com/download/ytdl?url=${encodeURIComponent(anu.url)}`;
+    const fetch = require('node-fetch'); 
+    let response = await fetch(apiUrl);
+    let jsonResponse = await response.json();
+    let videoUrl = jsonResponse.result.mp4;
+    let videoTitle = jsonResponse.result.title;
+    Taira.sendMessage(from, { 
+        video: { url: videoUrl }, 
+        mimetype: "video/mp4", 
+        caption: videoTitle + `\n> *ミ★ MAKINO-MD-V3 ★彡*`
+    }, { quoted: m });
+    
+    break;
+}
+
+case 'ytdl': case 'ytmp4': {
+      if (isBan) return reply(mess.banned);
+      if (isBanChat) return reply(mess.bangc);
+    Taira.sendMessage(from, { react: { text: "🍃", key: m.key } });
+    let apiUrl = `https://widipe.com/download/ytdl?url=${encodeURIComponent(q)}`;
+    const fetch = require('node-fetch'); 
+    let response = await fetch(apiUrl);
+    let jsonResponse = await response.json();
+    let videoUrl = jsonResponse.result.mp4;
+    let videoTitle = jsonResponse.result.title;
+    Taira.sendMessage(from, { 
+        video: { url: videoUrl }, 
+        mimetype: "video/mp4", 
+        caption: videoTitle + `\n> *ミ★ MAKINO-MD-V3 ★彡*`
+    }, { quoted: m });
+    
+    break;
+    }
+
+	
+   case'play': case 'song': {
+      if (isBan) return reply(mess.banned);
+      if (isBanChat) return reply(mess.bangc);
+    if (!text) return reply(`Example : ${prefix + command} Halsey Without me`);
+    const yts = require("youtube-yts");
+    let search = await yts(text);
+    let anup3k = search.videos[0];
+    if (!anup3k) return reply("Song not found,,try another .....!");
+    const apiUrl = `https://widipe.com/download/ytdl?url=${encodeURIComponent(anup3k.url)}`;
+    let audioResponse;
+    try {
+        audioResponse = await axios.get(apiUrl);
+    } catch (error) {
+        console.error("Error fetching audio:", error);
+        return reply("Failed to download the audio. Please try again.");
+    }
+    if (!audioResponse.data.status) {
+        return reply("Failed to retrieve audio URL. Please try again.");
+    }
+    const mp3Url = audioResponse.data.result.mp3;
+    // Download the MP3 file
+    let mp3Buffer;
+    try {
+        const mp3DownloadResponse = await axios.get(mp3Url, { responseType: 'arraybuffer' });
+        mp3Buffer = Buffer.from(mp3DownloadResponse.data);
+    } catch (error) {
+        console.error("Error downloading MP3:", error);
+        return reply("Failed to download the MP3. Please try again.");
+    }
+    await Taira.sendMessage(m.chat, {
+        audio: mp3Buffer,
+        fileName: anup3k.title + '.mp3',
+        mimetype: 'audio/mp4',
+        ptt: true,
+        contextInfo: {
+            externalAdReply: {
+                title: anup3k.title,
+                body: "ミ★ MAKINO-MD-V3 ★彡",
+                thumbnail: await fetchBuffer(anup3k.thumbnail), // Use thumbnail from the search result
+                mediaType: 2,
+                mediaUrl: anup3k.url,
             }
-         },
-          { quoted: m },
-        );
-      }
-        break;
+        },
+    }, { quoted: m });
+}
+break
+      //-----------------------------------------------------------------------------------------------------------------------------------//
+
 
       case 'spotify': {
         if (isBan) return reply(mess.banned);
@@ -3893,47 +3945,7 @@ case 'tovv': {
         );
       }
         break;
-
-
-      case 'ytvd': case 'video': case 'ytvideo': case 'ytmp4': {
-        if (isBan) return reply(mess.banned);
-        if (isBanChat) return reply(mess.bangc);
-        Taira.sendMessage(from, { react: { text: "🍃", key: m.key } })
-        const YT = require('./lib/ytdl-core')
-        let yts = require("youtube-yts")
-        let search = await yts(text)
-        let anu = search.videos[0]
-        const ytmp4play = await YT.mp4(anu.url)
-        Taira.sendMessage(from, { video: { url: ytmp4play.videoUrl }, mimetype: "video/mp4", caption: anu.title + ' By *Taira MD*', }, { quoted: m })
-      }
-
-        break;
-
 		    
-
-      case 'ytmp3': {
-        if (isBan) return reply(mess.banned);
-        if (isBanChat) return reply(mess.bangc);
-        Taira.sendMessage(from, { react: { text: "⌛", key: m.key } })
-
-        const YT = require('./lib/ytdl-core')
-        const ytmp3play2 = await YT.mp3(text)
-
-        await Taira.sendMessage(from, { document: fs.readFileSync(ytmp3play2.path), fileName: 'Taira_YTmp3_Downloader.mp3', mimetype: 'audio/mpeg', }, { quoted: m })
-      }
-        break;
-
-
-      case 'ytvd2': case 'ytmp4': {
-        if (isBan) return reply(mess.banned);
-        if (isBanChat) return reply(mess.bangc);
-        Taira.sendMessage(from, { react: { text: "🍁", key: m.key } })
-        const YT = require('./lib/ytdl-core')
-        const ytmp4play2 = await YT.mp4(text)
-        Taira.sendMessage(from, { video: { url: ytmp4play2.videoUrl }, mimetype: "video/mp4", caption: 'Downloaded by *Taira MD*', }, { quoted: m })
-      }
-        break;
-
 
       case 'lyrics':
         if (isBan) return reply(mess.banned);
@@ -3967,6 +3979,28 @@ case 'tovv': {
           Taira.sendMessage(from, { text: errorMessage, quoted: m });
         }
         break;
+
+
+	case 'runtime': case 'uptime': {
+                let pinga = `Faster Than Your Girlfriend 💦`
+                Taira.sendMessage(m.chat, {
+                    text: pinga,
+                    contextInfo: {
+                        externalAdReply: {
+                            showAdAttribution: true,
+                            title: `Uptime/Runtime ${runtime(process.uptime())}`,
+                            body: `ταιяα мακιиο`,
+                            thumbnailUrl: 'https://telegra.ph/file/5b7e44e2f5660aa2c4cad.jpg',
+                            sourceUrl: 'https://whatsapp.com/channel/0029Vag5l2ALSmbi14YryJ2r',
+                            mediaType: 1,
+                            renderLargerThumbnail: true
+                        }
+                    }
+                }, {
+                    quoted: m
+                })
+	}
+                break 
 
 
 
@@ -5104,6 +5138,7 @@ case 'tovv': {
 ╭═══════════════ ⪩
 ┃ • Addowner
 ┃ • delowner
+┃ • clear
 ┃ • ᴘᴜʙʟɪᴄ
 ┃ • self
 ┃ • ʀᴇꜱᴛᴀʀᴛ
@@ -5145,7 +5180,7 @@ case 'tovv': {
 ┃ • ɢʀᴏᴜᴘʟɪɴᴋ
 ┃ • ɪɴᴠɪᴛᴇ
 ┃ • ᴀᴅᴅ
-┃ •  savecontact
+┃ • savecontact
 ┃ • kick
 ┃ • left
 ┃ • ꜱᴇᴛɴᴀᴍᴇ
@@ -5183,9 +5218,9 @@ case 'tovv': {
 ╭═══════════════ ⪩
 ┃ •  ᴘʟᴀʏ
 ┃ •  ᴠɪᴅᴇᴏ
-┃ •  ʏᴛᴍᴘ3
+┃ •  YTDL
 ┃ •  ʏᴛᴍᴘ4
-┃ •  ytvideo
+┃ •  video
 ┃ •  ʟʏʀɪᴄꜱ
 ┃ •  ᴍᴏᴠɪᴇ
 ┃ •  mediafire
@@ -5197,7 +5232,6 @@ case 'tovv': {
 ┃ •  ɪᴍᴀɢᴇ
 ┃ •  insta
 ┃ •  ꜱᴇᴀʀᴄʜ
-┃ •  searchgc
 ┃ •  ꜱᴇᴀʀᴄʜɢᴄ
 ┃ •  ᴡɪᴋɪᴍᴇᴅɪᴀ
 ┃ •  ʏᴛᴠɪᴅᴇᴏ
@@ -5482,16 +5516,6 @@ quoted: m
     }
 break;
 
-      case '':
-        if (isCmd) {
-          if (isBan) return reply(mess.banned);
-          if (isBanChat) return reply(mess.bangc);
-          Taira.sendMessage(from, { react: { text: "✨", key: m.key } })
-
-          reply(`Hi ${pushname}👋 ,I am MAKINO-MD-V2 by Tᴀɪʀᴀ Mᴀᴋɪɴᴏ. Do you need any help ?`)
-        }
-
-        break;
 
 
       //////search
@@ -5539,6 +5563,7 @@ let messg = `
 ┃ • ᴀᴜᴛᴏ-ꜱᴛᴀᴛᴜꜱ
 ┃ • ʀᴇᴄᴏʀᴅɪɴɢ
 ┃ • pmblocker
+┃ •  uptime
 ╰════════════════ ⪨
 `
 await Taira.sendMessage(m.chat, { text: messg }, { quoted: statrp })
@@ -5553,6 +5578,7 @@ let messg = `
 ╭═══════════════ ⪩
 ┃ • Addowner
 ┃ • Delowner
+┃ • clear
 ┃ • ᴘᴜʙʟɪᴄ
 ┃ • self
 ┃ • ʀᴇꜱᴛᴀʀᴛ
@@ -5591,7 +5617,7 @@ let messg = `
 ┃ • ɢʀᴏᴜᴘʟɪɴᴋ
 ┃ • ɪɴᴠɪᴛᴇ
 ┃ • ᴀᴅᴅ
-┃ •  savecontact
+┃ • savecontact
 ┃ • kick
 ┃ • left
 ┃ • Antibot
@@ -5645,9 +5671,9 @@ let messg = `
 ╭═══════════════ ⪩
 ┃ •  ᴘʟᴀʏ
 ┃ •  ᴠɪᴅᴇᴏ
-┃ •  ʏᴛᴍᴘ3
+┃ •  YTDL
 ┃ •  ʏᴛᴍᴘ4
-┃ •  ytvideo
+┃ •  video
 ┃ •  ʟʏʀɪᴄꜱ
 ┃ •  ᴍᴏᴠɪᴇ
 ┃ •  mediafire
@@ -5659,7 +5685,6 @@ let messg = `
 ┃ •  ɪᴍᴀɢᴇ
 ┃ •  insta
 ┃ •  ꜱᴇᴀʀᴄʜ
-┃ •  searchgc
 ┃ •  ꜱᴇᴀʀᴄʜɢᴄ
 ┃ •  ᴡɪᴋɪᴍᴇᴅɪᴀ
 ┃ •  ʏᴛᴠɪᴅᴇᴏ
@@ -5985,7 +6010,7 @@ if (stdout) return reply(`${stdout}`)
 let file = require.resolve(__filename)
 fs.watchFile(file, () => {
   fs.unwatchFile(file)
-  console.log(chalk.redBright(`Update ${__filename}`))
+  console.log(`Update ${__filename}`)
   delete require.cache[file]
   require(file)
 })
